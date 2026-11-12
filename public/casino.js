@@ -21,7 +21,8 @@
     [50000, 'Saphir', 'chip-gradient g-sapphire'], [100000, 'Amethyst', 'chip-gradient g-amethyst'], [500000, 'Aurora', 'chip-gradient g-aurora'], [1000000, 'Sonnenaufgang', 'chip-gradient g-sunrise']
   ];
 
-  function standard() { return { balance: 1000, rettung: false, tisch: TISCHE[0].id, ton: true, sitzung: null, pokerName: '', poker: null, pokerCredited: [] }; }
+  function standard() { return { balance: 1000, rettung: false, tisch: TISCHE[0].id, ton: true, sitzung: null, pokerName: '', poker: null, pokerCredited: [], roulette: { chip: 1, target: 'red', bets: [], history: [], result: null } }; }
+  function validRouletteTarget(t) { return /^(n:(?:[0-9]|[12][0-9]|3[0-6])|red|black|even|odd|low|high|d[1-3]|c[1-3])$/.test(String(t || '')); }
   function laden() {
     try {
       var v = JSON.parse(localStorage.getItem(SCHLUESSEL));
@@ -34,7 +35,16 @@
         sitzung: v.sitzung && typeof v.sitzung === 'object' ? v.sitzung : null,
         pokerName: typeof v.pokerName === 'string' ? v.pokerName.slice(0, 16) : '',
         poker: v.poker && typeof v.poker === 'object' ? v.poker : null,
-        pokerCredited: Array.isArray(v.pokerCredited) ? v.pokerCredited.slice(-30) : []
+        pokerCredited: Array.isArray(v.pokerCredited) ? v.pokerCredited.slice(-30) : [],
+        roulette: v.roulette && typeof v.roulette === 'object' ? {
+          chip: [1,5,10,25,50].indexOf(Number(v.roulette.chip)) >= 0 ? Number(v.roulette.chip) : 1,
+          target: validRouletteTarget(v.roulette.target) ? v.roulette.target : 'red',
+          bets: Array.isArray(v.roulette.bets) ? v.roulette.bets.filter(function (b) { return b && validRouletteTarget(b.target) && Number.isSafeInteger(Number(b.amount)) && Number(b.amount) > 0; }).slice(0, 80).map(function (b) { return { target: b.target, amount: Math.min(500, Number(b.amount)) }; }) : [],
+          history: Array.isArray(v.roulette.history) ? v.roulette.history.filter(function (n) { return Number.isInteger(n) && n >= 0 && n <= 36; }).slice(-8) : [],
+          result: Number.isInteger(v.roulette.result) && v.roulette.result >= 0 && v.roulette.result <= 36 ? v.roulette.result : null,
+          lastReturn: Number.isSafeInteger(Number(v.roulette.lastReturn)) ? Math.max(0, Number(v.roulette.lastReturn)) : 0,
+          lastStake: Number.isSafeInteger(Number(v.roulette.lastStake)) ? Math.max(0, Number(v.roulette.lastStake)) : 0
+        } : { chip: 1, target: 'red', bets: [], history: [], result: null }
       };
     } catch (e) { return standard(); }
   }
@@ -88,12 +98,13 @@
       '<div class="section-kicker"><span>Blackjack · Tisch wählen</span><span>21</span></div><div class="table-list">' + options + '</div>' +
       '<p class="table-foot">Der Tisch behält seinen Stack bis du gehst. Jeder Einsatz bleibt unter dem Tischlimit.' + (!notfall && !resumed && daten.balance < TISCHE[0].buyMin && daten.rettung ? ' Deine einmalige Auffüllung wurde bereits genutzt.' : '') + '</p>' +
       (notfall ? '<button class="primary-btn" id="rescue">Einmalig 100 Notfallchips holen<span class="arrow">→</span></button>' : '<button class="primary-btn" id="play" ' + (!resumed && daten.balance < tisch().buyMin ? 'disabled' : '') + '>' + (resumed ? 'Zur laufenden Runde' : 'Am Tisch Platz nehmen') + '<span class="arrow">→</span></button>') +
-      '<button class="poker-entry" id="poker-entry"><span class="poker-entry-icon">♠</span><span><b>Texas Hold’em</b><small>Online · echte Spieler und Computergegner</small></span><span class="poker-entry-arrow">→</span></button>' +
+      '<div class="other-games"><button class="poker-entry" id="poker-entry"><span class="poker-entry-icon">♠</span><span><b>Texas Hold’em</b><small>Online · echte Spieler und Computergegner</small></span><span class="poker-entry-arrow">→</span></button><button class="poker-entry" id="roulette-entry"><span class="poker-entry-icon roulette-icon">◉</span><span><b>Roulette</b><small>European · ein grünes Feld</small></span><span class="poker-entry-arrow">→</span></button></div>' +
       '<div class="chips-guide" aria-label="Chipwerte">' + stage + '</div></div><div class="game-preview" aria-hidden="true">' + cards + '</div></section>';
     screen.querySelectorAll('[data-table]').forEach(function (b) { b.addEventListener('click', function () { daten.tisch = b.dataset.table; sichern(); home(); }); });
     var play = document.getElementById('play'); if (play) play.addEventListener('click', function () { if (daten.sitzung) { tableScreen(); return; } sitDown(); });
     var rescue = document.getElementById('rescue'); if (rescue) rescue.addEventListener('click', function () { if (daten.rettung || gesamt() >= TISCHE[0].buyMin) return; daten.balance = Math.max(daten.balance, 100); daten.rettung = true; sichern(); home(); notice('Dein Stand wurde einmalig auf 100 Chips angehoben.'); });
     document.getElementById('poker-entry').addEventListener('click', pokerHome);
+    document.getElementById('roulette-entry').addEventListener('click', rouletteHome);
   }
 
   var pokerTier = 'low', pokerSocket = null, pokerView = null, pokerJoinTimer = 0, pokerJoining = false;
@@ -205,6 +216,72 @@
     if (pokerSocket && pokerSocket.readyState === WebSocket.OPEN) pokerSocket.send(JSON.stringify({ type: 'leave' }));
     else openPoker();
     pokerRender(null);
+  }
+
+  var ROULETTE_MAX = 500;
+  var ROULETTE_RED = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+  function rouletteTotal() { return daten.roulette.bets.reduce(function (s, b) { return s + b.amount; }, 0); }
+  function rouletteLabel(t) {
+    if (t.indexOf('n:') === 0) return 'Zahl ' + t.slice(2);
+    return ({ red:'Rot', black:'Schwarz', even:'Gerade', odd:'Ungerade', low:'1–18', high:'19–36', d1:'1. Dutzend', d2:'2. Dutzend', d3:'3. Dutzend', c1:'1. Kolonne', c2:'2. Kolonne', c3:'3. Kolonne' })[t] || t;
+  }
+  function rouletteColor(n) { return n === 0 ? 'green' : ROULETTE_RED.indexOf(n) >= 0 ? 'red' : 'black'; }
+  function rouletteMatches(target, n) {
+    if (target.indexOf('n:') === 0) return Number(target.slice(2)) === n;
+    if (target === 'red' || target === 'black') return rouletteColor(n) === target;
+    if (target === 'even') return n > 0 && n % 2 === 0;
+    if (target === 'odd') return n > 0 && n % 2 === 1;
+    if (target === 'low') return n >= 1 && n <= 18;
+    if (target === 'high') return n >= 19 && n <= 36;
+    if (target.indexOf('d') === 0) { var d = Number(target.slice(1)); return n > 0 && Math.ceil(n / 12) === d; }
+    if (target.indexOf('c') === 0) return n > 0 && ((n - 1) % 3) + 1 === Number(target.slice(1));
+    return false;
+  }
+  function rouletteReturn(target, amount) { return amount * (target.indexOf('n:') === 0 ? 36 : target[0] === 'd' || target[0] === 'c' ? 3 : 2); }
+  function roulettePlace(target) {
+    var r = daten.roulette;
+    if (rouletteTotal() + r.chip > ROULETTE_MAX) { notice('Tischlimit: höchstens 500 Chips pro Dreh.'); return; }
+    if (rouletteTotal() + r.chip > daten.balance) { notice('Für diesen Einsatz reichen deine Chips nicht.'); return; }
+    var bet = r.bets.find(function (b) { return b.target === target; });
+    if (bet) bet.amount += r.chip; else r.bets.push({ target: target, amount: r.chip });
+    r.target = target; sichern(); rouletteHome();
+  }
+  function rouletteSpin() {
+    var r = daten.roulette, total = rouletteTotal();
+    if (!total) { notice('Lege zuerst einen Einsatz auf den Tisch.'); return; }
+    if (total > daten.balance) { notice('Für diese Einsätze reichen deine Chips nicht.'); return; }
+    daten.balance -= total;
+    var result = zufall(37), back = 0;
+    r.bets.forEach(function (b) { if (rouletteMatches(b.target, result)) back += rouletteReturn(b.target, b.amount); });
+    daten.balance += back; r.history.unshift(result); r.history = r.history.slice(0, 8); r.result = result; r.lastReturn = back; r.lastStake = total; r.bets = [];
+    sichern(); ton(result === 0 ? 560 : ROULETTE_RED.indexOf(result) >= 0 ? 420 : 300, .12); rouletteHome();
+  }
+  function rouletteHome() {
+    var r = daten.roulette, total = rouletteTotal(), numberRows = '';
+    for (var row = 0; row < 3; row++) for (var col = 0; col < 12; col++) {
+      var n = col * 3 + (3 - row);
+      numberRows += '<button class="roulette-number ' + rouletteColor(n) + (r.target === 'n:' + n ? ' chosen' : '') + '" data-r-target="n:' + n + '">' + n + '</button>';
+    }
+    var chipButtons = [1,5,10,25,50].map(function (v) { return '<button class="roulette-chip' + (r.chip === v ? ' selected' : '') + '" data-r-chip="' + v + '">' + zahl(v) + '</button>'; }).join('');
+    var outside = [
+      ['low','1–18'],['even','GERADE'],['red','ROT'],['black','SCHWARZ'],['odd','UNGERADE'],['high','19–36']
+    ].map(function (x) { return '<button class="roulette-outside ' + (x[0] === 'red' ? 'red' : x[0] === 'black' ? 'black' : '') + (r.target === x[0] ? ' chosen' : '') + '" data-r-target="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+    var groups = [['d1','1. Dutzend'],['d2','2. Dutzend'],['d3','3. Dutzend'],['c1','1. Kolonne'],['c2','2. Kolonne'],['c3','3. Kolonne']].map(function (x) { return '<button class="roulette-outside' + (r.target === x[0] ? ' chosen' : '') + '" data-r-target="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+    var placed = r.bets.length ? r.bets.map(function (b) { return '<span class="roulette-bet-tag">' + esc(rouletteLabel(b.target)) + ' <b>' + zahl(b.amount) + '</b></span>'; }).join('') : '<span class="roulette-empty">Wähle ein Feld und lege Chips darauf.</span>';
+    var hist = r.history.length ? r.history.map(function (n) { return '<span class="roulette-history ' + rouletteColor(n) + '">' + n + '</span>'; }).join('') : '<span class="roulette-empty">Noch keine Drehung</span>';
+    var resultText = r.result === null ? 'Setze deine Chips' : (r.result === 0 ? '0 · Grün' : r.result + ' · ' + (rouletteColor(r.result) === 'red' ? 'Rot' : 'Schwarz')) + ' · ' + (r.lastReturn > r.lastStake ? '+' + zahl(r.lastReturn - r.lastStake) + ' Gewinn' : 'kein Gewinn');
+    screen.innerHTML = '<section class="table-view roulette-view"><div class="table-head"><div class="table-heading"><small>ROULETTE · EUROPEAN</small><h1>Ein grünes Feld</h1><p>Einfacher Nullpunkt · Höchsteinsatz 500 Chips pro Dreh</p></div><button class="soft-btn" id="roulette-back">Zur Übersicht</button></div>' +
+      '<div class="roulette-table"><div class="roulette-top"><div class="roulette-result ' + (r.result === null ? '' : rouletteColor(r.result)) + '">' + (r.result === null ? '·' : r.result) + '</div><div class="roulette-center-copy"><b>' + esc(resultText) + '</b><div class="roulette-history-row">' + hist + '</div></div><div class="roulette-bank">Konto <b>' + zahl(daten.balance) + '</b></div></div>' +
+      '<div class="roulette-chips"><span>CHIPWERT</span>' + chipButtons + '</div><div class="roulette-grid-wrap"><button class="roulette-zero ' + (r.target === 'n:0' ? 'chosen' : '') + '" data-r-target="n:0">0</button><div class="roulette-grid">' + numberRows + '</div></div>' +
+      '<div class="roulette-outside-row">' + outside + '</div><div class="roulette-outside-row roulette-groups">' + groups + '</div>' +
+      '<div class="roulette-bets">' + placed + '<b class="roulette-total">' + zahl(total) + ' / ' + zahl(ROULETTE_MAX) + '</b></div></div>' +
+      '<div class="action-row roulette-actions"><button class="secondary-btn" id="roulette-clear" ' + (!r.bets.length ? 'disabled' : '') + '>Einsätze löschen</button><button class="primary-btn" id="roulette-spin" ' + (!r.bets.length || total > daten.balance ? 'disabled' : '') + '>Drehen<span class="arrow">→</span></button></div>' +
+      '<div class="table-bottom"><span class="stack-display">' + zahl(daten.balance) + ' Chips verfügbar</span><span class="table-help">Rot/Schwarz und Gerade/Ungerade zahlen 1:1 · Zahl zahlt 35:1</span></div></section>';
+    document.querySelectorAll('[data-r-target]').forEach(function (b) { b.addEventListener('click', function () { roulettePlace(b.dataset.rTarget); }); });
+    document.querySelectorAll('[data-r-chip]').forEach(function (b) { b.addEventListener('click', function () { r.chip = Number(b.dataset.rChip); sichern(); rouletteHome(); }); });
+    document.getElementById('roulette-back').addEventListener('click', home);
+    document.getElementById('roulette-spin').addEventListener('click', rouletteSpin);
+    document.getElementById('roulette-clear').addEventListener('click', function () { r.bets = []; sichern(); rouletteHome(); });
   }
 
   function sitDown() {

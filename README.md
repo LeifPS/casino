@@ -1,6 +1,6 @@
 # Casino
 
-Virtuelles Casino-Spiel für den Leif Game Hub. Die erste Etappe enthält Blackjack; weitere Spiele folgen schrittweise. Es gibt keine Echtgeldzahlungen und keine Verbindung zur Hub-Währung Hexis.
+Virtuelles Casino-Spiel für den Leif Game Hub. Blackjack, Texas Hold’em und European Roulette nutzen dasselbe virtuelle Chipkonto. Es gibt keine Echtgeldzahlungen und keine Verbindung zur Hub-Währung Hexis.
 
 ## Blackjack
 
@@ -10,6 +10,7 @@ Virtuelles Casino-Spiel für den Leif Game Hub. Die erste Etappe enthält Blackj
 - Hub-Lautstärke und eigener Spielton-Schalter; Spielstand-Code im Einstellungsmenü.
 - Texas Hold’em mit sechs Plätzen, frei gewählten Anzeigenamen ohne Login und Computergegnern an freien Plätzen.
 - Online-Tische laufen über WebSockets an Cloudflare Durable Objects. Die Chips eines Buy-ins liegen während der Partie am Tisch; beim Verlassen kommen sie ins gemeinsame lokale Konto zurück. Jede Poker-Runde hat zusätzlich ein festes Einsatzlimit.
+- European Roulette mit einem grünen Feld, Innen- und Außenwetten, Gewinnverlauf und höchstens 500 Chips Einsatz pro Dreh.
 
 ## Lokal starten
 
@@ -19,6 +20,6 @@ Mit Wrangler:
 wrangler dev
 ```
 
-## Geplant
+## Spielstände
 
-Weitere Casinospiele folgen schrittweise.
+Das gemeinsame Konto wird im lokalen Browser gespeichert. Es gibt weder ein eigenes Konto noch Cloud-Spielstände. Bei leerem Kontostand kann einmalig auf 100 Chips aufgefüllt werden.
