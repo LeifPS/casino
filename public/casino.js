@@ -9,6 +9,11 @@
     { id: 'klassik', name: 'Klassik', buyMin: 500, buyMax: 3000, maxBet: 500, klasse: 'Klassik' },
     { id: 'salon', name: 'Salon', buyMin: 2000, buyMax: 10000, maxBet: 2500, klasse: 'Salon' }
   ];
+  var POKER_TISCHE = [
+    { id: 'low', name: 'Einsteiger', buyMin: 100, buyMax: 1000, sb: 1, bb: 2 },
+    { id: 'classic', name: 'Klassik', buyMin: 500, buyMax: 3000, sb: 5, bb: 10 },
+    { id: 'salon', name: 'Salon', buyMin: 2000, buyMax: 10000, sb: 25, bb: 50 }
+  ];
   var STUFEN = [
     [1, 'Grau', 'chip-gray'], [5, 'Rot', 'chip-red'], [10, 'Dunkelblau', 'chip-blue'], [25, 'Dunkelgrün', 'chip-green'],
     [50, 'Hellblau', 'chip-lightblue'], [100, 'Schwarz', 'chip-black'], [500, 'Lila', 'chip-purple'], [1000, 'Gold', 'chip-gold'],
@@ -16,7 +21,7 @@
     [50000, 'Saphir', 'chip-gradient g-sapphire'], [100000, 'Amethyst', 'chip-gradient g-amethyst'], [500000, 'Aurora', 'chip-gradient g-aurora'], [1000000, 'Sonnenaufgang', 'chip-gradient g-sunrise']
   ];
 
-  function standard() { return { balance: 1000, rettung: false, tisch: TISCHE[0].id, ton: true, sitzung: null }; }
+  function standard() { return { balance: 1000, rettung: false, tisch: TISCHE[0].id, ton: true, sitzung: null, pokerName: '', poker: null, pokerCredited: [] }; }
   function laden() {
     try {
       var v = JSON.parse(localStorage.getItem(SCHLUESSEL));
@@ -26,7 +31,10 @@
         rettung: v.rettung === true,
         tisch: TISCHE.some(function (t) { return t.id === v.tisch; }) ? v.tisch : TISCHE[0].id,
         ton: v.ton !== false,
-        sitzung: v.sitzung && typeof v.sitzung === 'object' ? v.sitzung : null
+        sitzung: v.sitzung && typeof v.sitzung === 'object' ? v.sitzung : null,
+        pokerName: typeof v.pokerName === 'string' ? v.pokerName.slice(0, 16) : '',
+        poker: v.poker && typeof v.poker === 'object' ? v.poker : null,
+        pokerCredited: Array.isArray(v.pokerCredited) ? v.pokerCredited.slice(-30) : []
       };
     } catch (e) { return standard(); }
   }
@@ -34,7 +42,14 @@
   function sichern() { try { localStorage.setItem(SCHLUESSEL, JSON.stringify(daten)); } catch (e) {} }
   function tisch() { return TISCHE.find(function (t) { return t.id === daten.tisch; }) || TISCHE[0]; }
   function zahl(n) { return FORMAT.format(Math.floor(Number(n) || 0)); }
-  function gesamt() { return daten.balance + (daten.sitzung ? Math.max(0, Number(daten.sitzung.stack) || 0) : 0); }
+  function gesamt() {
+    var sum = daten.balance + (daten.sitzung ? Math.max(0, Number(daten.sitzung.stack) || 0) : 0);
+    if (daten.poker) {
+      var me = pokerView && pokerView.players && pokerView.players.find(function (p) { return p.id === daten.poker.id; });
+      sum += me ? Math.max(0, Number(me.stack) || 0) : Math.max(0, Number(daten.poker.buyIn) || 0);
+    }
+    return sum;
+  }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]; }); }
   function zufall(max) { var a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % max; }
   function ton(f, dauer) {
@@ -73,10 +88,123 @@
       '<div class="section-kicker"><span>Blackjack · Tisch wählen</span><span>21</span></div><div class="table-list">' + options + '</div>' +
       '<p class="table-foot">Der Tisch behält seinen Stack bis du gehst. Jeder Einsatz bleibt unter dem Tischlimit.' + (!notfall && !resumed && daten.balance < TISCHE[0].buyMin && daten.rettung ? ' Deine einmalige Auffüllung wurde bereits genutzt.' : '') + '</p>' +
       (notfall ? '<button class="primary-btn" id="rescue">Einmalig 100 Notfallchips holen<span class="arrow">→</span></button>' : '<button class="primary-btn" id="play" ' + (!resumed && daten.balance < tisch().buyMin ? 'disabled' : '') + '>' + (resumed ? 'Zur laufenden Runde' : 'Am Tisch Platz nehmen') + '<span class="arrow">→</span></button>') +
+      '<button class="poker-entry" id="poker-entry"><span class="poker-entry-icon">♠</span><span><b>Texas Hold’em</b><small>Online · echte Spieler und Computergegner</small></span><span class="poker-entry-arrow">→</span></button>' +
       '<div class="chips-guide" aria-label="Chipwerte">' + stage + '</div></div><div class="game-preview" aria-hidden="true">' + cards + '</div></section>';
     screen.querySelectorAll('[data-table]').forEach(function (b) { b.addEventListener('click', function () { daten.tisch = b.dataset.table; sichern(); home(); }); });
     var play = document.getElementById('play'); if (play) play.addEventListener('click', function () { if (daten.sitzung) { tableScreen(); return; } sitDown(); });
     var rescue = document.getElementById('rescue'); if (rescue) rescue.addEventListener('click', function () { if (daten.rettung || gesamt() >= TISCHE[0].buyMin) return; daten.balance = Math.max(daten.balance, 100); daten.rettung = true; sichern(); home(); notice('Dein Stand wurde einmalig auf 100 Chips angehoben.'); });
+    document.getElementById('poker-entry').addEventListener('click', pokerHome);
+  }
+
+  var pokerTier = 'low', pokerSocket = null, pokerView = null, pokerJoinTimer = 0, pokerJoining = false;
+  function pokerId() {
+    var id = '';
+    try { id = localStorage.getItem('casino.poker.id') || ''; } catch (e) {}
+    if (!/^[a-f0-9-]{36}$/i.test(id)) { id = crypto.randomUUID(); try { localStorage.setItem('casino.poker.id', id); } catch (e) {} }
+    return id;
+  }
+  function pokerConfig() { return POKER_TISCHE.find(function (t) { return t.id === pokerTier; }) || POKER_TISCHE[0]; }
+  function pokerHome() {
+    updateWallet();
+    if (daten.poker) { openPoker(); pokerRender(pokerView); return; }
+    pokerView = null;
+    var config = pokerConfig();
+    var options = POKER_TISCHE.map(function (t) {
+      var disabled = daten.balance < t.buyMin;
+      return '<button class="table-option' + (t.id === pokerTier ? ' selected' : '') + '" data-poker-table="' + t.id + '" ' + (disabled ? 'disabled' : '') + '><span class="table-name">' + t.name + ' · Texas Hold’em</span><span class="table-rate">Blinds ' + zahl(t.sb) + '/' + zahl(t.bb) + '</span><span class="table-limits">Buy-in ' + zahl(t.buyMin) + '–' + zahl(t.buyMax) + ' · Max ' + zahl(t.maxBet) + ' je Runde</span></button>';
+    }).join('');
+    screen.innerHTML = '<section class="table-view poker-lobby"><div class="table-head"><div class="table-heading"><small>ONLINE · TEXAS HOLD’EM</small><h1>Such dir deinen Tisch</h1><p>Kein Login nötig · bis zu fünf Computergegner füllen freie Plätze</p></div><button class="soft-btn" id="poker-back">Zurück</button></div>' +
+      '<div class="poker-lobby-card"><div class="section-kicker"><span>Blinds, Einsatzlimit und Buy-in</span><span>Virtuelle Chips</span></div><div class="table-list">' + options + '</div>' +
+      '<label class="nick-label" for="poker-name">Dein Anzeigename</label><input class="nick-input" id="poker-name" maxlength="16" autocomplete="nickname" autocapitalize="words" placeholder="Zum Beispiel Leif" value="' + esc(daten.pokerName) + '">' +
+      '<p class="table-foot">Ein frei gewählter Name genügt. Es gibt kein Konto und keinen zusätzlichen Login.</p><button class="primary-btn" id="join-poker" ' + (daten.balance < config.buyMin ? 'disabled' : '') + '>Zum Tisch · Buy-in ab ' + zahl(config.buyMin) + '<span class="arrow">→</span></button></div>' +
+      '<div class="table-bottom"><span class="stack-display">Verfügbar ' + zahl(daten.balance) + ' Chips</span><span class="table-help">Texas Hold’em · Einsatzlimit je Runde · Server entscheidet Karten und Einsätze</span></div></section>';
+    screen.querySelectorAll('[data-poker-table]').forEach(function (b) { b.addEventListener('click', function () { pokerTier = b.dataset.pokerTable; pokerHome(); }); });
+    document.getElementById('poker-back').addEventListener('click', home);
+    document.getElementById('join-poker').addEventListener('click', pokerJoin);
+  }
+  function pokerJoin() {
+    var name = document.getElementById('poker-name').value.trim().replace(/\s+/g, ' '), t = pokerConfig();
+    if (!/^[\p{L}\p{N} _-]{2,16}$/u.test(name)) { notice('Der Name braucht 2 bis 16 Buchstaben oder Zahlen.'); return; }
+    if (daten.balance < t.buyMin) { notice('Für diesen Tisch reichen deine Chips gerade nicht.'); return; }
+    var buyIn = Math.min(t.buyMax, daten.balance, Math.max(t.buyMin, Math.floor(daten.balance / 4 / 10) * 10));
+    daten.balance -= buyIn; daten.pokerName = name;
+    daten.poker = { id: pokerId(), name: name, tier: t.id, buyIn: buyIn, leaving: false, confirmed: false };
+    sichern(); openPoker(); pokerRender(null);
+  }
+  function openPoker() {
+    if (!daten.poker || pokerJoining || (pokerSocket && (pokerSocket.readyState === WebSocket.OPEN || pokerSocket.readyState === WebSocket.CONNECTING))) return;
+    pokerJoining = true;
+    var p = daten.poker, u = new URL('/ws/poker', location.href);
+    u.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    u.searchParams.set('tisch', p.tier); u.searchParams.set('id', p.id); u.searchParams.set('name', p.name); u.searchParams.set('buyIn', p.buyIn);
+    try { pokerSocket = new WebSocket(u); } catch (e) { pokerJoining = false; pokerRender(null); return; }
+    var s = pokerSocket;
+    pokerJoinTimer = setTimeout(function () {
+      if (s === pokerSocket && !pokerView) {
+        pokerJoining = false;
+        if (!pokerView && daten.poker && !daten.poker.leaving) {
+          if (!daten.poker.confirmed) { daten.balance += daten.poker.buyIn; daten.poker = null; sichern(); home(); notice('Der Pokertisch ist gerade nicht erreichbar.'); try { s.close(); } catch (e) {} }
+          else pokerRender(null);
+        }
+      }
+    }, 6500);
+    s.onopen = function () { pokerJoining = false; };
+    s.onmessage = function (e) {
+      var m; try { m = JSON.parse(e.data); } catch (x) { return; }
+      if (m.type === 'state') { clearTimeout(pokerJoinTimer); pokerJoining = false; pokerView = m; if (daten.poker) { daten.poker.confirmed = true; sichern(); } if (daten.poker && daten.poker.leaving) { try { s.send(JSON.stringify({ type: 'leave' })); } catch (x) {} pokerRender(null); } else pokerRender(m); }
+      else if (m.type === 'cashout') {
+        if (daten.pokerCredited.indexOf(m.id) < 0) { daten.balance += Math.max(0, Math.floor(Number(m.amount) || 0)); daten.pokerCredited.push(m.id); daten.pokerCredited = daten.pokerCredited.slice(-30); }
+        sichern(); try { s.send(JSON.stringify({ type: 'cashout-ack', id: m.id })); } catch (x) {}
+        daten.poker = null; pokerView = null; pokerSocket = null; sichern(); updateWallet(); home(); notice('Dein Pokertisch-Stack liegt wieder im gemeinsamen Konto.');
+      }
+    };
+    s.onerror = function () { pokerJoining = false; };
+    s.onclose = function () { if (s === pokerSocket) { pokerSocket = null; pokerJoining = false; if (daten.poker) { pokerView = null; pokerRender(null); } } };
+  }
+  function pokerCard(c) {
+    if (!c) return '';
+    var suit = ['♠', '♥', '♦', '♣'][c.s] || '♠', r = c.r === 14 ? 'A' : c.r === 13 ? 'K' : c.r === 12 ? 'Q' : c.r === 11 ? 'J' : c.r;
+    return '<span class="playing-card poker-card' + ((c.s === 1 || c.s === 2) ? ' red' : '') + '"><span>' + r + '</span><span class="pip">' + suit + '</span></span>';
+  }
+  function pokerRender(state) {
+    if (!daten.poker) { pokerHome(); return; }
+    updateWallet();
+    var p = daten.poker, t = POKER_TISCHE.find(function (x) { return x.id === p.tier; }) || POKER_TISCHE[0];
+    if (!state) {
+      screen.innerHTML = '<section class="table-view"><div class="table-head"><div class="table-heading"><small>ONLINE · TEXAS HOLD’EM</small><h1>' + (pokerSocket ? 'Verbinde mit ' + t.name : 'Verbindung unterbrochen') + '</h1><p>Buy-in ' + zahl(p.buyIn) + ' Chips · Tisch mit Computergegnern</p></div><button class="soft-btn" id="poker-cancel" ' + (p.leaving ? 'disabled' : '') + '>' + (p.leaving ? 'Verlassen …' : 'Tisch verlassen') + '</button></div><div class="felt-table poker-felt poker-wait"><div class="status-dot"></div><p>' + (p.leaving ? 'Runde wird beendet · Stack wird zurückgelegt …' : pokerSocket ? 'Tisch wird geöffnet …' : 'Tippe auf „Erneut verbinden“, um zum Tisch zurückzukehren.') + '</p></div><div class="table-status">Dein Name: ' + esc(p.name) + '</div><div class="action-row">' + (!pokerSocket && !pokerJoining ? '<button class="action-btn primary" id="poker-reconnect">' + (p.leaving ? 'Stack zurückholen' : 'Erneut verbinden') + '</button>' : '') + '</div><div class="table-bottom"><span class="stack-display">Buy-in ' + zahl(p.buyIn) + '</span><span class="table-help">Deine Chips bleiben während der Runde am Tisch.</span></div></section>';
+      var cancel = document.getElementById('poker-cancel'); if (cancel) cancel.addEventListener('click', pokerLeave);
+      var reconnect = document.getElementById('poker-reconnect'); if (reconnect) reconnect.addEventListener('click', function () { pokerView = null; openPoker(); pokerRender(null); });
+      return;
+    }
+    var cards = state.board.map(pokerCard).join('');
+    var seats = state.players.map(function (s) {
+      var cls = (s.id === state.turnId ? ' is-turn' : '') + (s.folded ? ' folded' : '') + (s.waiting ? ' waiting' : '');
+      return '<div class="poker-seat' + cls + '"><div class="poker-seat-name">' + esc(s.name) + (s.bot ? '<small>CPU</small>' : '') + (s.dealer ? '<i>D</i>' : '') + '</div><div class="poker-seat-stack">' + (s.folded ? 'Passt' : zahl(s.stack) + ' Chips') + (s.bet ? '<small>setzt ' + zahl(s.bet) + '</small>' : '') + '</div><div class="poker-hole">' + (s.cards.length ? s.cards.map(pokerCard).join('') : (!s.folded && !s.waiting ? '<span class="card-back-small">✦</span><span class="card-back-small">✦</span>' : '')) + '</div></div>';
+    }).join('');
+    var me = state.players.find(function (x) { return x.id === state.myId; });
+    var isTurn = state.turnId === state.myId && state.phase !== 'showdown';
+    var betText = state.phase === 'waiting' ? 'Warte auf den Start der nächsten Hand.' : state.phase === 'showdown' ? 'Hand abgeschlossen.' : state.message;
+    var buttons = isTurn ? '<button class="action-btn danger" data-poker-action="fold">Passen</button>' +
+      (state.call > 0 ? '<button class="action-btn primary" data-poker-action="call">Mitgehen<span>' + zahl(state.call) + ' Chips</span></button>' : '<button class="action-btn primary" data-poker-action="check">Check</button>') +
+      '<button class="action-btn" data-poker-action="raise">Erhöhen<span>mind. ' + zahl(state.minRaise) + '</span></button><button class="action-btn" data-poker-action="allin">Maximal<span>bis ' + zahl(state.maxBet) + '</span></button>' : '';
+    var canRebuy = me && me.stack === 0 && daten.balance >= t.buyMin;
+    var winnerText = state.winners && state.winners.length ? state.winners.map(function (w) { return esc(w.name) + ' +' + zahl(w.amount); }).join(' · ') : '';
+    screen.innerHTML = '<section class="table-view poker-room"><div class="table-head"><div class="table-heading"><small>TEXAS HOLD’EM · ' + esc(t.name) + '</small><h1>Hand ' + zahl(state.handNo) + '</h1><p>Blinds ' + zahl(t.sb) + '/' + zahl(t.bb) + ' · Max ' + zahl(t.maxBet) + ' je Runde · ' + (state.phase === 'waiting' ? 'Neue Runde gleich' : esc(state.phase)) + '</p></div><div class="table-head-actions"><button class="soft-btn" id="poker-rules">Regeln</button><button class="soft-btn" id="poker-leave">Tisch verlassen</button></div></div>' +
+      '<div class="felt-table poker-felt"><div class="poker-seats">' + seats + '</div><div class="poker-center"><div class="poker-pot">POT <b>' + zahl(state.pot) + '</b></div><div class="poker-board">' + cards + '</div><div class="poker-message" aria-live="polite">' + (winnerText || esc(betText)) + '</div></div></div>' +
+      '<div class="table-status">' + (me ? 'Dein Stack am Tisch: ' + zahl(me.stack) : 'Du bist Zuschauer') + (me && me.waiting ? ' · bereit für die nächste Hand' : '') + '</div>' +
+      (canRebuy ? '<div class="poker-rebuy"><span>Dein Stack ist leer.</span><button class="secondary-btn" id="poker-rebuy">Nachkaufen ' + zahl(t.buyMin) + '</button></div>' : '') +
+      '<div class="action-row">' + buttons + '</div><div class="table-bottom"><span class="stack-display">Kontostand ' + zahl(daten.balance + (me ? me.stack : 0)) + '</span><span class="table-help">Virtuelle Chips · Server mischt · Einsatzlimit ' + zahl(t.maxBet) + ' je Runde</span></div></section>';
+    screen.querySelectorAll('[data-poker-action]').forEach(function (b) { b.addEventListener('click', function () { if (pokerSocket && pokerSocket.readyState === WebSocket.OPEN) pokerSocket.send(JSON.stringify({ type: 'action', action: b.dataset.pokerAction })); }); });
+    document.getElementById('poker-leave').addEventListener('click', pokerLeave);
+    document.getElementById('poker-rules').addEventListener('click', function () { modal('Texas Hold’em', 'Jeder Spieler bekommt zwei verdeckte Karten. Gemeinsam nutzt ihr bis zu fünf offene Karten. Setze, gehe mit oder passe in deiner Runde. Die beste Fünf-Karten-Kombination gewinnt den Pot. Computergegner füllen leere Plätze. Der Cloudflare-Worker verwaltet den Tisch und begrenzt den Einsatz je Runde auf ' + zahl(t.maxBet) + ' Chips.', 'Verstanden'); });
+    var rebuy = document.getElementById('poker-rebuy'); if (rebuy) rebuy.addEventListener('click', function () { if (!pokerSocket || pokerSocket.readyState !== WebSocket.OPEN || daten.balance < t.buyMin) return; var amount = Math.min(t.buyMax, daten.balance, t.buyMin); daten.balance -= amount; sichern(); pokerSocket.send(JSON.stringify({ type: 'rebuy', amount: amount })); pokerRender(pokerView); });
+  }
+  function pokerLeave() {
+    if (!daten.poker || daten.poker.leaving) return;
+    daten.poker.leaving = true; sichern();
+    if (pokerSocket && pokerSocket.readyState === WebSocket.OPEN) pokerSocket.send(JSON.stringify({ type: 'leave' }));
+    else openPoker();
+    pokerRender(null);
   }
 
   function sitDown() {
@@ -228,5 +356,5 @@
   }
   window.LGH_ZEILEN = function () { return [{ text: 'Spielton', an: daten.ton, setze: function (v) { daten.ton = v; sichern(); } }]; };
   window.addEventListener('storage', function (e) { if (e.key === SCHLUESSEL) { daten = laden(); if (daten.sitzung) tableScreen(); else home(); } });
-  if (daten.sitzung) tableScreen(); else home();
+  if (daten.sitzung) tableScreen(); else if (daten.poker) pokerHome(); else home();
 })();

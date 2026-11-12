@@ -1,10 +1,24 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "casino",
+  "main": "./src/index.js",
   "compatibility_date": "2026-11-12",
   "assets": {
     "directory": "./public",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": false
+    "run_worker_first": ["/ws/*"]
+  },
+  "durable_objects": {
+    "bindings": [
+      { "name": "POKER_TABLE", "class_name": "PokerTable" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["PokerTable"] }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
   }
 }
