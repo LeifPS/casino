@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import * as S from '../public/js/sl-engine.js';
+assert.equal(S.WALZE.length, 20);
+assert.ok(S.WALZE.every(s => S.SYMBOLE.includes(s)));
+const idx = (s) => S.WALZE.indexOf(s);
+assert.equal(S.auszahlung([idx('sieben'), idx('sieben'), idx('sieben')]).mult, 500);
+assert.equal(S.auszahlung([idx('bar'), idx('bar'), idx('bar')]).mult, 100);
+assert.equal(S.auszahlung([idx('pik'), idx('pik'), idx('pik')]).mult, 10);
+assert.equal(S.auszahlung([idx('sieben'), idx('sieben'), idx('pik')]).mult, 2);
+assert.equal(S.auszahlung([idx('herz'), idx('herz'), idx('pik')]).mult, 1);
+assert.equal(S.auszahlung([idx('herz'), idx('pik'), idx('herz')]).mult, 0);
+assert.equal(S.auszahlung([idx('sieben'), idx('herz'), idx('herz')]).mult, 0);
+const r = S.rtp(); assert.ok(r > 0.93 && r < 0.97, 'RTP ' + r);
+const d = S.drehen(); assert.equal(d.length, 3); assert.ok(d.every(x => x >= 0 && x < 20));
+console.log('Slot-Engine: alle Tests bestanden (Auszahlungsquote ' + (r * 100).toFixed(2) + ' %)');

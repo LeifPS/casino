@@ -27,3 +27,11 @@ export function kunstRoulette() {
   return `<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="${R}" fill="#6b3f1d" stroke="#e8c56a" stroke-width="2"/>${keile}<circle cx="60" cy="60" r="${r - 2}" fill="#d9a521" stroke="#fff1bd" stroke-width="1.5"/><circle cx="60" cy="60" r="5" fill="#fff1bd"/><circle cx="86" cy="38" r="4" fill="#fff" stroke="#0004"/></svg>`;
 }
 export function kunstLobby() { return ''; }
+
+export function kunstVideopoker() {
+  return `<svg viewBox="0 0 120 120" aria-hidden="true">${karteSvg(6, 30, 40, 56, -10, 'A', '♠', false)}${karteSvg(26, 26, 40, 56, -4, 'K', '♥', true)}${karteSvg(46, 24, 40, 56, 2, 'D', '♣', false)}${karteSvg(66, 26, 40, 56, 8, 'B', '♦', true)}${chipMini(60, 100, 14, '#2c5aa0', '#dce6f6')}</svg>`;
+}
+export function kunstSlots() {
+  const w = (x, t, f) => `<rect x="${x}" y="30" width="30" height="50" rx="5" fill="#fbf8ef" stroke="#e8c56a" stroke-width="2"/><text x="${x + 15}" y="66" text-anchor="middle" font-family="Georgia,serif" font-weight="800" font-size="32" fill="${f}">${t}</text>`;
+  return `<svg viewBox="0 0 120 120" aria-hidden="true"><rect x="8" y="18" width="104" height="74" rx="10" fill="#3a1d52" stroke="#e8c56a" stroke-width="3"/>${w(14, '7', '#c4262e')}${w(45, '7', '#c4262e')}${w(76, '7', '#c4262e')}<path d="M10 55 H110" stroke="#ffe27a" stroke-width="2" stroke-dasharray="4 3"/>${chipMini(60, 102, 11, '#c8322f', '#f6dcda')}</svg>`;
+}

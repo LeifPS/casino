@@ -157,7 +157,7 @@ svg.chip { display: block; width: var(--cw, 40px); height: var(--cw, 40px); }
   .einsatzfeld { min-height: calc(var(--cs) * 1.05); padding: 3px 12px; }
   .knopf { min-height: 40px; } .aktionen .knopf { min-height: 48px; }
   .bj-mitte { min-height: 2.4em; }
-  .lobby { padding-top: 6px; } .lobby-kopf p { display: none; } .lobby-spiele { grid-template-columns: repeat(4, 1fr); }
+  .lobby { padding-top: 6px; } .lobby-kopf p { display: none; } .lobby-spiele { grid-template-columns: repeat(5, 1fr); }
   .wahl-liste { grid-template-columns: repeat(3, 1fr); } .wahl-kopf p { display: none; }
   .lobby-konto { min-height: 52px; --cw: 28px; }
 }
@@ -284,3 +284,48 @@ svg.chip { display: block; width: var(--cw, 40px); height: var(--cw, 40px); }
   .rl.quer .rl-z { font-size: clamp(.8rem, 2.4vw, 1.1rem); } .rl.quer .rl-a { font-size: clamp(.6rem, 1.6vw, .8rem); }
 }
 @media (prefers-reduced-motion: reduce) { .rl-meldung.da { animation: none; } }
+
+/* ----- Video-Poker und Automat (ein Einsatz je Runde) ----- */
+.sp-host { background: #04120b; }
+.sp { flex: 1; min-height: 0; display: flex; flex-direction: column; background: radial-gradient(90% 60% at 50% 35%, rgba(255,255,255,.12), transparent 70%), var(--filz); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--rand) 55%, transparent); }
+.sp-kopf { flex: none; display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: rgba(0,0,0,.28); }
+.sp-kopf .knopf { min-height: 32px; padding: 0 10px; } .sp-tisch { margin-right: auto; font: 700 .9rem Georgia, serif; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-flaeche { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; gap: 6px; padding: 8px 10px; }
+.sp-steuer { flex: none; padding: 6px 10px calc(var(--sa-u) + 10px); background: linear-gradient(transparent, rgba(0,0,0,.45) 30%); }
+.knoepfe.w4 { grid-template-columns: 1fr 1fr .8fr 1.7fr; }
+.spiel-fuss { display: flex; justify-content: center; margin-top: 4px; } .spiel-fuss .knopf { min-height: 30px; }
+.vp-meld { min-height: 2.2em; display: flex; align-items: center; justify-content: center; gap: 10px; text-align: center; font: 700 1.05rem Georgia, serif; animation: auf .3s ease both; }
+.vp-meld.leise { opacity: .7; font-weight: 400; } .vp-meld.gut { color: #ffe27a; font-size: 1.3rem; } .vp-meld.schlecht, .vp-meld .schlecht { color: #ffb4b4; }
+
+.vp-tabelle { width: 100%; max-width: 560px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+.vp-z { display: flex; justify-content: space-between; gap: 4px; padding: 3px 7px; border-radius: 6px; background: rgba(0,0,0,.32); font-size: .66rem; line-height: 1.2; } .vp-z b { color: #ffe27a; font-variant-numeric: tabular-nums; }
+.vp-z.treffer { background: var(--gold); color: #2a1d00; box-shadow: 0 0 12px rgba(255,226,122,.8); } .vp-z.treffer b { color: #2a1d00; }
+.vp-karten { --kw: clamp(44px, min(16vw, 13vh), 96px); display: flex; justify-content: center; gap: clamp(4px, 1.6vw, 12px); }
+.vp-platz { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; background: none; border: 0; color: inherit; transition: transform .15s; touch-action: manipulation; }
+.vp-platz .karte + .karte { margin-left: 0; }
+.vp-platz.gehalten { transform: translateY(-8px); } .vp-platz.gehalten .karte { box-shadow: 0 0 0 3px #ffe27a, 0 4px 14px rgba(0,0,0,.6); }
+.vp-halt { min-height: 1.1em; font-size: .62rem; font-weight: 800; letter-spacing: .08em; color: #ffe27a; }
+
+.sl-tabelle { width: 100%; max-width: 560px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.sl-pz { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 3px 8px; border-radius: 8px; background: rgba(0,0,0,.32); font-size: .75rem; } .sl-pz b { color: #ffe27a; font-variant-numeric: tabular-nums; } .sl-pz.zwei { grid-column: 1 / -1; font-size: .72rem; }
+.sl-mini { display: flex; gap: 0; } .sl-mini svg { width: 18px; height: 18px; }
+.sl-automat { padding: 10px; border-radius: 18px; background: linear-gradient(#5a2a7a, #34174b); border: 3px solid #e8c56a; box-shadow: 0 6px 20px #000a, inset 0 0 18px #0008; }
+.sl-fenster { --sh: clamp(50px, min(15vw, 12vh), 100px); position: relative; display: flex; gap: 6px; padding: 4px; border-radius: 10px; background: #0b0b10; }
+.sl-fenster.sl-treffer { box-shadow: 0 0 0 3px #ffe27a, 0 0 22px 6px rgba(255,226,122,.85); animation: blink .6s ease 3; }
+@keyframes blink { 50% { box-shadow: 0 0 0 3px #fff, 0 0 30px 10px rgba(255,255,255,.9); } }
+.sl-walze { width: calc(var(--sh) * 1.05); height: calc(var(--sh) * 3); overflow: hidden; border-radius: 7px; background: linear-gradient(#cfcfd6, #fbf8ef 20%, #fbf8ef 80%, #cfcfd6); position: relative; }
+.sl-walze::after { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.45), transparent 28%, transparent 72%, rgba(0,0,0,.45)); pointer-events: none; }
+.sl-streifen { will-change: transform; }
+.sl-sym { height: var(--sh); display: grid; place-items: center; background: #1b1b26; border-bottom: 1px solid #0006; } .sl-sym svg { width: 78%; height: 78%; }
+.sl-linie { position: absolute; left: 0; right: 0; top: 50%; height: 3px; transform: translateY(-50%); background: #ffe27a; box-shadow: 0 0 8px #ffe27a; pointer-events: none; opacity: .9; z-index: 2; }
+
+@media (min-aspect-ratio: 13/10) {
+  .sp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(290px, 38%); grid-template-rows: auto minmax(0, 1fr); }
+  .sp-kopf { grid-column: 1 / -1; padding: 2px 8px; } .sp-kopf .knopf { min-height: 28px; }
+  .sp-flaeche { grid-column: 1; grid-row: 2; padding: 4px 10px; gap: 2px; }
+  .sp-steuer { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; justify-content: center; background: rgba(0,0,0,.28); padding: 4px 10px calc(var(--sa-u) + 4px); }
+  .vp-karten { --kw: clamp(40px, min(9vw, 18vh), 90px); } .vp-tabelle { grid-template-columns: repeat(3, 1fr); } .vp-z { padding: 1px 6px; font-size: .62rem; }
+  .sl-fenster { --sh: clamp(40px, 11vh, 80px); } .sl-tabelle { display: none; } .vp-meld { min-height: 1.6em; font-size: .95rem; } .vp-meld.gut { font-size: 1.1rem; }
+}
+@media (max-height: 460px) { .spiel-fuss { display: none; } }
+@media (prefers-reduced-motion: reduce) { .sl-fenster.sl-treffer, .vp-meld { animation: none; } }

@@ -2,15 +2,19 @@ import * as Store from './store.js';
 import { chipDefs, chipSvg, CHIPS, fmt, stapelHtml } from './chips.js';
 import { Ton } from './ton.js';
 import { dom, dialog, bestaetigen, hinweis, zaehle, esc } from './ui.js';
-import { kunstBlackjack, kunstPoker, kunstRoulette } from './kunst.js';
+import { kunstBlackjack, kunstPoker, kunstRoulette, kunstVideopoker, kunstSlots } from './kunst.js';
 import { blackjack } from './blackjack.js';
 import { poker, pokerUnterwegs, pokerWiederverbinden } from './poker.js';
 import { roulette, rouletteRetten } from './roulette.js';
+import { videopoker } from './videopoker.js';
+import { slots, slotsRetten } from './slots.js';
 
 const SPIELE = [
   { ...blackjack, kunst: kunstBlackjack, zeile: 'Schlage die Bank, ohne über 21 zu kommen.' },
   { ...poker, kunst: kunstPoker },
   { ...roulette, kunst: kunstRoulette },
+  { ...videopoker, kunst: kunstVideopoker },
+  { ...slots, kunst: kunstSlots },
 ];
 
 const app = document.getElementById('app');
@@ -45,7 +49,7 @@ function lobby() {
     <div class="lobby-konto">${stapelHtml(Store.chips()) || ''}<div class="lobby-summe"><small>Dein Guthaben</small><b>${fmt(Store.chips())}</b></div></div>
     <div class="lobby-spiele">${SPIELE.map(s => `<button type="button" class="spielkarte${s.bereit ? '' : ' bald'}" data-id="${s.id}"${s.bereit ? '' : ' disabled'}>
       <span class="kunst">${s.kunst()}</span><span class="sk-name">${esc(s.name)}</span><span class="sk-zeile">${esc(s.zeile)}</span>
-      ${s.bereit ? (s.id === 'blackjack' && laufend ? '<span class="sk-marke">Runde läuft</span>' : (s.id === 'poker' && pokerUnterwegs() ? '<span class="sk-marke">Du sitzt am Tisch</span>' : '')) : '<span class="sk-marke bald-marke">Bald</span>'}</button>`).join('')}</div>`;
+      ${s.bereit ? (s.id === 'blackjack' && laufend ? '<span class="sk-marke">Runde läuft</span>' : (s.id === 'videopoker' && Store.state.vp && Store.state.vp.phase === 'halten' ? '<span class="sk-marke">Runde läuft</span>' : s.id === 'poker' && pokerUnterwegs() ? '<span class="sk-marke">Du sitzt am Tisch</span>' : '')) : '<span class="sk-marke bald-marke">Bald</span>'}</button>`).join('')}</div>`;
   buehne.querySelectorAll('.spielkarte').forEach(b => b.addEventListener('click', () => { Ton.klick(); oeffne(b.dataset.id); }));
 }
 
@@ -86,6 +90,7 @@ function einstellungen() {
 // Start: laufende Runde fortsetzen, sonst Lobby
 const b = Store.state.bj;
 if (rouletteRetten() > 0) hinweis('Eine unterbrochene Roulette-Drehung wurde abgerechnet.');
+if (slotsRetten() > 0) hinweis('Eine unterbrochene Automaten-Drehung wurde abgerechnet.');
 if (pokerUnterwegs()) { pokerWiederverbinden(); oeffne('poker'); }
 else oeffne(b && b.phase !== 'einsatz' && b.phase !== 'ende' ? 'blackjack' : 'lobby');
 if (!Store.speicherGeht()) hinweis('Dieser Browser speichert nichts: Chips gehen beim Schließen verloren.');
