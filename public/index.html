@@ -3,34 +3,18 @@
 <head>
 <script src="lgh-vorlade.js"></script><!--lgh-->
 
-
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0c1312">
-  <meta name="description" content="Blackjack und Texas Hold’em mit virtuellen Chips im Leif Game Hub.">
-  <title>Casino · Leif Game Hub</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="casino.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06180f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Casino</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/casino.css">
+<script type="module" src="js/main.js"></script>
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="topbar-space" aria-hidden="true"></div>
-      <a class="brand" href="#start" aria-label="Casino Startseite">
-        <span class="brand-chip" aria-hidden="true"><i></i></span>
-        <span>LEIF <b>CASINO</b></span>
-      </a>
-      <div class="wallet-pill" aria-label="Dein Chipkonto">
-        <span class="wallet-chip" aria-hidden="true">◆</span>
-        <span id="wallet-total">1.000</span>
-        <span class="wallet-label">CHIPS</span>
-      </div>
-    </header>
-
-    <main id="screen" class="screen" tabindex="-1"></main>
-    <footer class="footer-note"><span class="status-dot"></span> Nur virtuelle Chips · Kein Echtgeld</footer>
-  </div>
-  <script src="casino.js"></script>
-<!--lgh-start--><script>window.LGH_SPIEL='casino';window.LGH_POS='tr';</script><script src="lgh-modul.js"></script><!--lgh-ende-->
+<div id="app"></div>
+<noscript>Das Casino braucht JavaScript.</noscript>
+<!--lgh-start--><script>window.LGH_SPIEL='casino';window.LGH_POS='bc';window.LGH_EIGENER_KNOPF=true;</script><script src="lgh-modul.js"></script><!--lgh-ende-->
 </body>
 </html>

@@ -1,0 +1,168 @@
+:root {
+  --gold: #e8c56a; --gold-dunkel: #b8872a; --text: #f4efe2; --nacht: #06180f;
+  --kwb: clamp(46px, min(21vw, 12.5vh), 100px);
+  --cs: clamp(36px, min(12.5vw, 7.6vh), 62px);
+  --sa-o: env(safe-area-inset-top, 0px); --sa-u: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: #04120b; color: var(--text); overscroll-behavior: none;
+  font: 16px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-text-size-adjust: 100%; }
+button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+button:disabled { cursor: default; }
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; background: radial-gradient(120% 80% at 50% 0%, #0f3a28, #04120b 70%); }
+
+/* ----- obere Leiste (links bleibt Platz für das LGH-Symbol des Hubs) ----- */
+.leiste { flex: none; display: flex; align-items: center; gap: 8px; padding: calc(var(--sa-o) + 5px) 8px 5px 64px; min-height: calc(var(--sa-o) + 50px); background: rgba(0,0,0,.35); border-bottom: 1px solid rgba(232,197,106,.25); }
+.spielwahl { margin-right: auto; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 12px; border: 1px solid rgba(232,197,106,.35); background: rgba(255,255,255,.06); font-weight: 700; font-family: Georgia, "Times New Roman", serif; letter-spacing: .02em; color: var(--gold); max-width: 100%; }
+.spielwahl i { font-style: normal; font-size: .8em; opacity: .8; }
+.konto { display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px 3px 4px; border-radius: 999px; background: rgba(0,0,0,.45); border: 1px solid rgba(232,197,106,.35); min-height: 36px; }
+.konto-chip svg { width: 28px; height: 28px; display: block; }
+.konto b { font-variant-numeric: tabular-nums; font-size: 1.02rem; color: #fff7d6; }
+.zahnrad { width: 40px; height: 40px; padding: 0; display: grid; place-items: center; border-radius: 12px; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.06); }
+.zahnrad svg { width: 22px; height: 22px; }
+#buehne { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+
+#spielmenue { position: absolute; z-index: 40; top: calc(var(--sa-o) + 48px); left: 64px; min-width: 200px; padding: 6px; border-radius: 14px; background: #10241a; border: 1px solid rgba(232,197,106,.5); box-shadow: 0 14px 40px rgba(0,0,0,.6); display: flex; flex-direction: column; gap: 2px; }
+#spielmenue button { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border: 0; background: none; border-radius: 10px; text-align: left; }
+#spielmenue button:hover:not(:disabled), #spielmenue button:focus-visible { background: rgba(255,255,255,.1); }
+#spielmenue button:disabled { opacity: .45; }
+#spielmenue small { opacity: .7; }
+
+/* ----- allgemeine Knöpfe ----- */
+.knopf { min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.1); font-weight: 600; transition: transform .08s, filter .15s; }
+.knopf:active:not(:disabled) { transform: scale(.96); }
+.knopf:disabled { opacity: .38; }
+.knopf.klein { min-height: 36px; padding: 0 10px; font-size: .9rem; }
+.knopf.gold { background: linear-gradient(#f3d77f, #c99a35); color: #2a1d00; border-color: #fff1bd; font-weight: 800; text-shadow: 0 1px 0 rgba(255,255,255,.35); box-shadow: 0 2px 0 #8a6218; }
+.knopf.leise { background: rgba(255,255,255,.07); }
+.knopf.gefahr { background: #8f2230; border-color: #e07a86; }
+.knopf[aria-pressed="true"] { background: rgba(232,197,106,.25); border-color: var(--gold); }
+
+/* ----- Dialoge ----- */
+.schleier { position: absolute; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 14px; background: rgba(2,8,5,.74); }
+.dlg { width: 100%; max-width: 420px; max-height: 100%; display: flex; flex-direction: column; border-radius: 18px; background: #10241a; border: 1px solid rgba(232,197,106,.5); box-shadow: 0 20px 60px rgba(0,0,0,.7); -webkit-user-select: text; user-select: text; }
+.dlg.breit { max-width: 520px; }
+.dlg h2 { margin: 0; padding: 16px 18px 8px; font: 700 1.25rem Georgia, serif; color: var(--gold); }
+.dlg-k { padding: 0 18px; overflow: auto; min-height: 0; }
+.dlg-k p { margin: 6px 0 10px; }
+.dlg-k h3 { margin: 14px 0 6px; font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; color: var(--gold); }
+.dlg-u { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 18px 16px; }
+.regeln { padding-left: 18px; margin: 4px 0 6px; } .regeln li { margin: 0 0 8px; }
+.opt { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+.opt small { display: block; opacity: .65; font-size: .8rem; margin-top: 2px; }
+.chipliste { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px 4px; }
+.chipeintrag { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: .78rem; text-align: center; font-weight: 700; }
+.chipeintrag svg { width: 100%; max-width: 46px; height: auto; } .chipeintrag small { display: block; font-weight: 400; opacity: .7; font-size: .68rem; }
+.stand { opacity: .9; }
+#toast { position: absolute; left: 50%; bottom: calc(var(--sa-u) + 18px); transform: translate(-50%, 20px); opacity: 0; z-index: 70; max-width: 90%; padding: 10px 16px; border-radius: 12px; background: #000c; border: 1px solid rgba(232,197,106,.5); transition: .25s; pointer-events: none; text-align: center; }
+#toast.an { opacity: 1; transform: translate(-50%, 0); }
+
+/* ----- Chips und Stapel ----- */
+svg.chip { display: block; width: var(--cw, 40px); height: var(--cw, 40px); }
+.stapel { display: flex; align-items: flex-end; justify-content: center; gap: calc(var(--cw, 40px) * .12); }
+.saeule { display: flex; flex-direction: column-reverse; align-items: center; }
+.saeule .chip { filter: drop-shadow(0 1.5px 1px rgba(0,0,0,.5)); }
+.saeule .chip + .chip { margin-bottom: calc(var(--cw, 40px) * -.82); }
+.chipknopf { --cw: var(--cs); flex: none; width: var(--cs); height: var(--cs); padding: 0; border: 0; background: none; border-radius: 50%; transition: transform .1s; }
+.chipknopf:active:not(:disabled) { transform: scale(.9) translateY(2px); }
+.chipknopf:disabled { opacity: .28; filter: grayscale(.7); }
+
+/* ----- Lobby ----- */
+.lobby { padding: 10px 14px calc(var(--sa-u) + 12px); gap: 10px; overflow: auto; }
+.lobby-kopf h1 { margin: 0; font: 700 clamp(1.6rem, 6vw, 2.3rem) Georgia, serif; color: var(--gold); letter-spacing: .04em; }
+.lobby-kopf p { margin: 2px 0 0; opacity: .8; }
+.lobby-konto { --cw: 38px; display: flex; align-items: flex-end; gap: 16px; min-height: 64px; padding: 8px 12px; border-radius: 16px; background: rgba(0,0,0,.28); border: 1px solid rgba(232,197,106,.25); }
+.lobby-konto .stapel { justify-content: flex-start; flex: none; }
+.lobby-summe { margin-left: auto; text-align: right; } .lobby-summe small { display: block; opacity: .7; } .lobby-summe b { font-size: 1.7rem; color: #fff7d6; font-variant-numeric: tabular-nums; }
+.lobby-spiele { flex: 1; min-height: 0; display: grid; gap: 10px; grid-template-columns: repeat(2, 1fr); grid-auto-rows: minmax(0, 1fr); }
+.spielkarte { position: relative; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px 8px 10px; border-radius: 16px; border: 1px solid rgba(232,197,106,.4); background: linear-gradient(160deg, #146b46, #0a3a27); text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,.35); transition: transform .12s; }
+.spielkarte:active:not(:disabled) { transform: scale(.97); }
+.spielkarte.bald { filter: saturate(.35) brightness(.8); } .spielkarte.bald .kunst { opacity: .6; }
+.kunst { flex: 1; min-height: 0; width: 100%; display: grid; place-items: center; } .kunst svg { height: 100%; max-height: 120px; width: auto; max-width: 100%; }
+.sk-name { font: 700 1.08rem Georgia, serif; } .sk-zeile { font-size: .78rem; opacity: .8; line-height: 1.2; }
+.sk-marke { position: absolute; top: 8px; right: 8px; padding: 2px 8px; border-radius: 999px; background: var(--gold); color: #2a1d00; font-size: .72rem; font-weight: 800; }
+.sk-marke.bald-marke { background: rgba(255,255,255,.25); color: #fff; }
+
+/* ----- Tischwahl ----- */
+.wahl { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 10px 12px calc(var(--sa-u) + 10px); gap: 10px; background: radial-gradient(100% 70% at 50% 0%, #11452f, transparent); }
+.wahl-kopf { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; } .wahl-kopf h2 { margin: 0; font: 700 1.5rem Georgia, serif; color: var(--gold); } .wahl-kopf p { margin: 0; opacity: .8; flex-basis: 100%; font-size: .9rem; } .wahl-kopf .knopf { margin-left: auto; order: 2; }
+.wahl-liste { flex: 1; min-height: 0; display: grid; gap: 8px; grid-template-columns: repeat(2, 1fr); grid-auto-rows: minmax(0, 1fr); }
+.tischkarte { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 8px 12px; text-align: left; border-radius: 14px; border: 2px solid var(--rand); background: radial-gradient(120% 120% at 30% 0%, rgba(255,255,255,.18), transparent 60%), var(--filz); }
+.tischkarte:disabled { filter: grayscale(.8) brightness(.55); }
+.tischkarte.aktuell { box-shadow: 0 0 0 3px var(--gold), 0 0 18px rgba(232,197,106,.5); }
+.tk-name { font: 700 1.2rem Georgia, serif; } .tk-zeile { font-size: .85rem; opacity: .92; } .tk-extra { font-size: .72rem; opacity: .65; }
+.tk-sperre { position: absolute; right: 8px; top: 8px; font-size: .72rem; background: #000a; padding: 2px 8px; border-radius: 999px; }
+
+/* ----- Blackjack ----- */
+.bj-host { background: #04120b; }
+.bj { --kw: var(--kwb); flex: 1; min-height: 0; display: flex; flex-direction: column; background: radial-gradient(90% 60% at 50% 38%, rgba(255,255,255,.16), transparent 70%), var(--filz); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--rand) 55%, transparent), inset 0 0 60px rgba(0,0,0,.4); }
+.bj-kopf { flex: none; display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: .85rem; background: rgba(0,0,0,.25); }
+.bj-tisch { margin-right: auto; font-family: Georgia, serif; font-weight: 700; color: var(--gold); } .bj-schuh { opacity: .65; font-size: .78rem; }
+.bj-flaeche { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 8px 10px; transition: opacity .3s; }
+.bj-flaeche.alt .karten, .bj-flaeche.alt .hand-info, .bj-flaeche.alt .hand-einsatz { opacity: .45; }
+.bj-bank { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.zone-titel { font: 700 .85rem Georgia, serif; letter-spacing: .08em; text-transform: uppercase; opacity: .85; display: flex; gap: 8px; align-items: center; min-height: 1.5em; }
+.bj-mitte { flex: none; min-height: 3.2em; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.filzschrift { font: 600 .72rem Georgia, serif; letter-spacing: .16em; text-transform: uppercase; opacity: .38; line-height: 1.7; }
+.meldung { font: 800 clamp(1.3rem, 5.5vw, 1.9rem) Georgia, serif; text-shadow: 0 2px 8px #000a; animation: auf .4s ease both; }
+.meldung.gut { color: #ffe27a; } .meldung.schlecht { color: #ff9b9b; }
+.meldung span { font-variant-numeric: tabular-nums; }
+.meldung-klein { font-size: .9rem; opacity: .85; animation: auf .3s ease both; }
+.leerhinweis { opacity: .5; font-style: italic; align-self: center; }
+.bj-spieler { display: flex; justify-content: center; align-items: flex-end; gap: clamp(6px, 2vw, 18px); }
+.bj-spieler.v2 { --kw: calc(var(--kwb) * .86); } .bj-spieler.v3 { --kw: calc(var(--kwb) * .64); gap: 6px; }
+.hand { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 6px 6px; border-radius: 14px; }
+.hand.aktiv { box-shadow: 0 0 0 2px var(--gold), 0 0 16px rgba(232,197,106,.6); background: rgba(255,255,255,.06); }
+.hand-info { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; min-height: 1.6em; }
+.hand-einsatz { --cw: calc(var(--kw) * .34); display: flex; align-items: center; gap: 6px; } .hand-einsatz .betrag { font-weight: 700; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.summe { padding: 1px 9px; border-radius: 999px; background: rgba(0,0,0,.5); font-weight: 800; font-variant-numeric: tabular-nums; font-size: .95rem; } .summe.ueber { background: #8f2230; }
+.erg { padding: 1px 9px; border-radius: 999px; font-weight: 800; font-size: .78rem; background: #566; animation: auf .3s ease both; }
+.erg.gewonnen, .erg.blackjack { background: var(--gold); color: #2a1d00; } .erg.verloren, .erg.ueberkauft { background: #9c2430; }
+
+.karten { display: flex; align-items: center; min-height: calc(var(--kw) * 1.4); }
+.karte { position: relative; flex: none; width: var(--kw); height: calc(var(--kw) * 1.4); font-size: calc(var(--kw) * .3); border-radius: calc(var(--kw) * .1); background: #fbf8ef; box-shadow: 0 2px 6px rgba(0,0,0,.5), inset 0 0 0 1px rgba(0,0,0,.12); font-family: Georgia, "Times New Roman", serif; }
+.karte + .karte { margin-left: calc(var(--kw) * -.52); }
+.karte.rot { color: #c4262e; } .karte.schwarz { color: #1c1c21; }
+.ecke { position: absolute; display: flex; flex-direction: column; align-items: center; line-height: .95; left: .2em; top: .14em; }
+.ecke b { font-size: 1em; } .ecke u { text-decoration: none; font-size: .9em; }
+.ecke.u { left: auto; top: auto; right: .2em; bottom: .14em; transform: rotate(180deg); }
+.karte .mitte { position: absolute; inset: 0; display: grid; place-items: center; font-size: 2.3em; padding-top: .1em; }
+.karte.rueck { border: calc(var(--kw) * .06) solid #fbf8ef; background: repeating-linear-gradient(45deg, #8f1b2d 0 calc(var(--kw) * .07), #6b1021 calc(var(--kw) * .07) calc(var(--kw) * .14)); }
+.karte.rueck i { position: absolute; inset: 18%; border: 1.5px solid rgba(255,255,255,.55); border-radius: 4px; }
+.karte.neu { animation: geben .4s cubic-bezier(.2, .8, .3, 1) both; animation-delay: calc(var(--v, 0) * .17s); }
+.karte.dreh { animation: dreh .45s ease both; }
+@keyframes geben { from { transform: translate(calc(var(--kw) * 3), calc(var(--kw) * -2.6)) rotate(22deg); opacity: 0; } 60% { opacity: 1; } to { transform: none; opacity: 1; } }
+@keyframes dreh { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes auf { from { transform: translateY(8px) scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.bj-steuer { flex: none; padding: 8px 10px calc(var(--sa-u) + 10px); background: linear-gradient(transparent, rgba(0,0,0,.45) 30%); }
+.einsatzbereich { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.einsatzfeld { --cw: calc(var(--cs) * .82); position: relative; align-self: center; min-width: 150px; min-height: calc(var(--cs) * 1.2); display: flex; align-items: flex-end; justify-content: center; gap: 12px; padding: 6px 14px; border-radius: 999px; border: 2px dashed color-mix(in srgb, var(--rand) 70%, transparent); background: rgba(0,0,0,.2); }
+.einsatzfeld .leer { opacity: .55; align-self: center; font-size: .85rem; letter-spacing: .1em; text-transform: uppercase; }
+.einsatzfeld .betrag { align-self: center; font: 800 1.35rem Georgia, serif; color: #fff7d6; font-variant-numeric: tabular-nums; }
+.chipreihe { display: flex; justify-content: center; gap: clamp(4px, 1.6vw, 12px); }
+.knoepfe { display: grid; grid-template-columns: repeat(3, 1fr) 1.7fr; gap: 6px; }
+.knoepfe.gross { grid-template-columns: 1.4fr 1fr; } .knoepfe .knopf { padding: 0 6px; }
+.knopf.gross { font-size: 1.05rem; }
+.aktionen { display: grid; grid-template-columns: 1.3fr 1.1fr 1fr 1fr; gap: 6px; } .aktionen .knopf { min-height: 54px; padding: 0 4px; font-size: .95rem; }
+.steuer-text { text-align: center; } .steuer-text p { margin: 2px 0 10px; } .leise-text { opacity: .7; }
+
+/* ----- Querformat: Tisch links, Bedienung rechts ----- */
+@media (min-aspect-ratio: 13/10) {
+  :root { --kwb: clamp(40px, min(8vw, 12.5vh), 96px); --cs: clamp(34px, min(6vw, 11.5vh), 58px); }
+  .bj { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 38%); grid-template-rows: auto minmax(0, 1fr); }
+  .bj-kopf { grid-column: 1 / -1; padding: 3px 10px; }
+  .bj-flaeche { grid-column: 1; grid-row: 2; padding: 4px 10px; }
+  .bj-steuer { grid-column: 2; grid-row: 2; align-self: stretch; display: flex; flex-direction: column; justify-content: center; background: rgba(0,0,0,.28); padding: 6px 10px calc(var(--sa-u) + 6px); }
+  .einsatzfeld { min-height: calc(var(--cs) * 1.05); padding: 3px 12px; }
+  .knopf { min-height: 40px; } .aktionen .knopf { min-height: 48px; }
+  .bj-mitte { min-height: 2.4em; }
+  .lobby { padding-top: 6px; } .lobby-kopf p { display: none; } .lobby-spiele { grid-template-columns: repeat(4, 1fr); }
+  .wahl-liste { grid-template-columns: repeat(3, 1fr); } .wahl-kopf p { display: none; }
+  .lobby-konto { min-height: 52px; --cw: 28px; }
+}
+@media (max-height: 460px) { .leiste { min-height: calc(var(--sa-o) + 42px); padding-top: calc(var(--sa-o) + 2px); padding-bottom: 2px; } .spielwahl { min-height: 34px; } .zahnrad { width: 34px; height: 34px; } .konto { min-height: 32px; } .konto-chip svg { width: 24px; height: 24px; } .knopf { min-height: 38px; } }
+@media (prefers-reduced-motion: reduce) { .karte.neu, .karte.dreh, .meldung, .meldung-klein, .erg { animation: none; } }
+
+.bj-spieler.v1 .erg { display: none; }
+@media (max-height: 460px) { .hand-einsatz .stapel { display: none; } .hand-einsatz { --cw: 0px; } .karten { min-height: calc(var(--kw) * 1.4); } .bj-flaeche { padding: 2px 10px; } .hand { padding: 2px 6px 3px; gap: 1px; } .zone-titel { min-height: 1.2em; } }
