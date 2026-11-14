@@ -5,11 +5,12 @@ import { dom, dialog, bestaetigen, hinweis, zaehle, esc } from './ui.js';
 import { kunstBlackjack, kunstPoker, kunstRoulette } from './kunst.js';
 import { blackjack } from './blackjack.js';
 import { poker, pokerUnterwegs, pokerWiederverbinden } from './poker.js';
+import { roulette, rouletteRetten } from './roulette.js';
 
 const SPIELE = [
   { ...blackjack, kunst: kunstBlackjack, zeile: 'Schlage die Bank, ohne über 21 zu kommen.' },
   { ...poker, kunst: kunstPoker },
-  { id: 'roulette', name: 'Roulette', bereit: false, kunst: kunstRoulette, zeile: 'Setze auf Zahlen, Farben und Felder.' },
+  { ...roulette, kunst: kunstRoulette },
 ];
 
 const app = document.getElementById('app');
@@ -84,6 +85,7 @@ function einstellungen() {
 
 // Start: laufende Runde fortsetzen, sonst Lobby
 const b = Store.state.bj;
+if (rouletteRetten() > 0) hinweis('Eine unterbrochene Roulette-Drehung wurde abgerechnet.');
 if (pokerUnterwegs()) { pokerWiederverbinden(); oeffne('poker'); }
 else oeffne(b && b.phase !== 'einsatz' && b.phase !== 'ende' ? 'blackjack' : 'lobby');
 if (!Store.speicherGeht()) hinweis('Dieser Browser speichert nichts: Chips gehen beim Schließen verloren.');
