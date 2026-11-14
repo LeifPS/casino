@@ -58,7 +58,7 @@ export function statistik(spiel, runden, netto) {
   if (netto > 0) { s.siege += 1; if (netto > s.bester) s.bester = netto; }
 }
 export function neuAnfangen() {
-  const n = leer();
+  const n = leer(); if (state.name) n.name = state.name;
   for (const k of Object.keys(state)) delete state[k];
   Object.assign(state, n);
   speichern(); melden();

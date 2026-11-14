@@ -166,3 +166,74 @@ svg.chip { display: block; width: var(--cw, 40px); height: var(--cw, 40px); }
 
 .bj-spieler.v1 .erg { display: none; }
 @media (max-height: 460px) { .hand-einsatz .stapel { display: none; } .hand-einsatz { --cw: 0px; } .karten { min-height: calc(var(--kw) * 1.4); } .bj-flaeche { padding: 2px 10px; } .hand { padding: 2px 6px 3px; gap: 1px; } .zone-titel { min-height: 1.2em; } }
+
+/* ----- Texas Hold’em ----- */
+.pk-host { background: #04120b; }
+.pk { --kw: clamp(30px, min(9.5vw, 6.4vh), 64px); flex: 1; min-height: 0; display: flex; flex-direction: column; background: #06140e; }
+.pk-kopf { flex: none; display: flex; align-items: center; gap: 8px; padding: 5px 10px; font-size: .85rem; background: rgba(0,0,0,.35); }
+.pk-info { margin-right: auto; font: 700 .95rem Georgia, serif; color: var(--gold); }
+.pk-netz.aus { color: #ffb4b4; font-weight: 700; }
+.pk-kopf .knopf { min-height: 34px; padding: 0 12px; }
+.pk-tisch { position: relative; flex: 1; min-height: 0; margin: 4px 6px; container-type: size; }
+.pk .oval { position: absolute; inset: 9% 4% 9%; border-radius: 50%; background: radial-gradient(70% 70% at 50% 40%, rgba(255,255,255,.14), transparent 70%), var(--filz); border: 4px solid var(--rand); box-shadow: inset 0 0 0 5px rgba(0,0,0,.28), 0 6px 24px #000a; }
+.pk .mitte { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 4px; width: 62%; }
+.pk .board { display: flex; justify-content: center; min-height: calc(var(--kw) * 1.4); }
+.pk .board .karte + .karte { margin-left: 4px; }
+.pk .pot { display: flex; align-items: center; gap: 6px; min-height: 1.5em; font-size: .85rem; font-variant-numeric: tabular-nums; } .pk .pot b { font-size: 1rem; color: #fff3c4; }
+.pk .pot-chip { width: 20px; display: inline-block; } .pk .pot-chip svg { width: 100%; height: auto; display: block; }
+.pk .erg { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 0; background: none; font-size: .72rem; line-height: 1.25; text-align: center; text-shadow: 0 1px 4px #000; max-width: 100%; min-height: 1.2em; }
+.pk .ergzeile { animation: auf .3s ease both; } .pk .ergzeile b { color: #ffe27a; }
+
+/* Plätze: p0 = unten Mitte (ich), im Uhrzeigersinn */
+.sitz { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 22%; transform: translate(-50%, -50%); z-index: 2; }
+.sitz.p0 { left: 50%; top: 86%; } .sitz.p1 { left: 10%; top: 68%; } .sitz.p2 { left: 10%; top: 24%; }
+.sitz.p3 { left: 50%; top: 10%; } .sitz.p4 { left: 90%; top: 24%; } .sitz.p5 { left: 90%; top: 68%; }
+.sitz-karten { display: flex; --kw: calc(var(--kwb2, 34px)); min-height: calc(var(--kw) * 1.4); } .sitz-karten .karte { --kw: var(--kwb2, 34px); } .sitz-karten .karte + .karte { margin-left: calc(var(--kwb2, 34px) * -.35); }
+.pk { --kwb2: clamp(22px, min(6vw, 5.2vh), 46px); }
+.sitz.p0 .sitz-karten .karte { --kw: calc(var(--kwb2) * 1.35); } .sitz.p0 .sitz-karten { min-height: calc(var(--kwb2) * 1.35 * 1.4); } .sitz.p0 .sitz-karten .karte + .karte { margin-left: calc(var(--kwb2) * 1.35 * -.3); }
+.sitz-box { position: relative; min-width: 100%; padding: 3px 6px; border-radius: 12px; text-align: center; background: rgba(8,12,20,.88); border: 2px solid rgba(255,255,255,.22); line-height: 1.15; }
+.sitz.ich .sitz-box { border-color: var(--gold); }
+.sitz.aktiv .sitz-box { box-shadow: 0 0 0 2px #fff, 0 0 14px 3px rgba(255,226,122,.9); border-color: var(--gold); }
+.sitz.gefoldet { opacity: .5; } .sitz.gefoldet .sitz-karten { visibility: hidden; } .sitz.offline .sitz-name { opacity: .5; text-decoration: line-through; }
+.sitz.gewinner .sitz-box { background: #4a3500; border-color: #ffe27a; box-shadow: 0 0 16px 4px rgba(255,226,122,.8); }
+.sitz-name { font-size: .72rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .sitz-name i { font-style: normal; font-size: .6rem; opacity: .6; margin-left: 4px; border: 1px solid; border-radius: 4px; padding: 0 3px; }
+.sitz-stack { font-size: .8rem; font-weight: 800; color: #ffe27a; font-variant-numeric: tabular-nums; }
+.sitz-status { position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); padding: 0 7px; border-radius: 999px; font-size: .62rem; font-weight: 800; background: #566; white-space: nowrap; }
+.sitz-status.raise, .sitz-status.bet, .sitz-status.allin { background: #b0391f; } .sitz-status.call, .sitz-status.check { background: #2a6e5a; } .sitz-status.fold { background: #444; }
+.zeit { position: absolute; left: 4px; right: 4px; bottom: 1px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.2); overflow: hidden; }
+.zeit i { display: block; height: 100%; background: #ffe27a; transform-origin: left; transform: scaleX(var(--von)); animation: zeitlauf var(--ms) linear forwards; }
+@keyframes zeitlauf { to { transform: scaleX(0); } }
+.gewinn-marke { position: absolute; top: -12px; padding: 0 8px; border-radius: 999px; background: var(--gold); color: #2a1d00; font-weight: 800; font-size: .75rem; animation: auf .4s ease both; }
+.einsatz { position: absolute; display: flex; align-items: center; gap: 4px; transform: translate(-50%, -50%); font-size: .72rem; font-weight: 800; z-index: 1; --cw: 18px; text-shadow: 0 1px 3px #000; font-variant-numeric: tabular-nums; }
+.einsatz .stapel { display: flex; }
+.einsatz.b0 { left: 50%; top: 62%; } .einsatz.b1 { left: 27%; top: 62%; } .einsatz.b2 { left: 27%; top: 32%; }
+.einsatz.b3 { left: 50%; top: 30%; } .einsatz.b4 { left: 73%; top: 32%; } .einsatz.b5 { left: 73%; top: 62%; }
+.dealer { position: absolute; width: 22px; height: 22px; border-radius: 50%; background: #fff; color: #111; font: 800 .75rem/22px Georgia, serif; text-align: center; box-shadow: 0 1px 4px #000; z-index: 3; transform: translate(-50%, -50%); }
+.dealer.d0 { left: 38%; top: 74%; } .dealer.d1 { left: 21%; top: 56%; } .dealer.d2 { left: 21%; top: 36%; }
+.dealer.d3 { left: 62%; top: 20%; } .dealer.d4 { left: 79%; top: 36%; } .dealer.d5 { left: 79%; top: 56%; }
+
+.pk-steuer { flex: none; padding: 6px 10px calc(var(--sa-u) + 8px); background: linear-gradient(transparent, rgba(0,0,0,.5) 30%); min-height: 76px; display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+.pk-steuer .leise-text { text-align: center; margin: 4px 0; }
+.meinhand { text-align: center; font-size: .78rem; color: #ffe27a; font-weight: 700; }
+.aktionen3 { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 6px; } .aktionen3 .knopf { min-height: 54px; padding: 0 4px; }
+.raise { display: flex; flex-direction: column; gap: 5px; }
+.raise-kopf { display: flex; justify-content: center; align-items: center; gap: 14px; } .raise-kopf b { font: 800 1.4rem Georgia, serif; min-width: 5ch; text-align: center; font-variant-numeric: tabular-nums; }
+.raise input[type=range], .feld input[type=range] { width: 100%; accent-color: #e8c56a; height: 28px; }
+.schnell { display: flex; gap: 6px; } .schnell .knopf { flex: 1; min-height: 36px; padding: 0 4px; }
+.knoepfe2 { display: grid; grid-template-columns: 1fr 2fr; gap: 6px; } .knoepfe2 .knopf { min-height: 50px; }
+.knopf.klein { min-height: 36px; padding: 0 12px; font-size: .85rem; }
+.feld { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; font-size: .9rem; } .feld input[type=text] { font: inherit; font-size: 16px; padding: 10px; border-radius: 10px; border: 2px solid rgba(255,255,255,.3); background: rgba(0,0,0,.35); color: #fff; }
+.codezeile { display: flex; gap: 6px; } .codezeile input { flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: .12em; }
+.fehlertext { color: #ffb4b4; min-height: 1.2em; margin: 4px 0 0; font-size: .85rem; }
+.regeln { padding-left: 1.1em; margin: 0; } .regeln li { margin: 0 0 8px; font-size: .88rem; line-height: 1.35; }
+
+@media (min-aspect-ratio: 13/10) {
+  .pk { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 34%); grid-template-rows: auto minmax(0, 1fr); }
+  .pk-kopf { grid-column: 1 / -1; padding: 2px 10px; } .pk-kopf .knopf { min-height: 28px; }
+  .pk-tisch { grid-column: 1; grid-row: 2; margin: 2px 4px; }
+  .pk-steuer { grid-column: 2; grid-row: 2; background: rgba(0,0,0,.3); padding: 6px 10px calc(var(--sa-u) + 6px); }
+  .pk { --kwb2: clamp(20px, min(4.2vw, 7.2vh), 44px); --kw: clamp(28px, min(5.5vw, 9vh), 60px); }
+  .sitz { width: 17%; } .sitz.p0 { top: 84%; } .sitz.p3 { top: 12%; }
+  .aktionen3 .knopf { min-height: 48px; } .raise .knopf { min-height: 40px; }
+}
+@media (prefers-reduced-motion: reduce) { .zeit i, .gewinn-marke, .ergzeile { animation: none; } }

@@ -54,17 +54,17 @@ export function zaehle(elem, nach) {
 }
 
 /** Tischwahl: Liste der Tische mit Mindest-/Höchsteinsatz und Buy-in */
-export function tischWahl(host, { titel, chips, aktuell, info, beiWahl, beiZurueck }) {
+export function tischWahl(host, { titel, chips, aktuell, info, beiWahl, zeilen, buyin }) {
   host.innerHTML = `<div class="wahl"><div class="wahl-kopf"><h2>${esc(titel)}</h2><p>Wähle einen Tisch. Deine Chips nimmst du mit, sie gelten in allen Spielen.</p></div><div class="wahl-liste"></div></div>`;
   const liste = host.querySelector('.wahl-liste');
   for (const t of TISCHE) {
-    const gehtNicht = chips < t.buyin;
+    const mindest = buyin ? buyin(t) : t.buyin;
+    const gehtNicht = chips < mindest;
     const b = dom(`<button type="button" class="tischkarte${t.id === aktuell ? ' aktuell' : ''}" ${gehtNicht ? 'disabled' : ''} style="--filz:${t.filz};--rand:${t.rand}">
       <span class="tk-name">${esc(t.name)}</span>
-      <span class="tk-zeile">Einsatz <b>${fmt(t.min)}</b> – <b>${fmt(t.max)}</b></span>
-      <span class="tk-zeile">Buy-in ab <b>${fmt(t.buyin)}</b></span>
+      ${zeilen ? zeilen(t) : `<span class="tk-zeile">Einsatz <b>${fmt(t.min)}</b> – <b>${fmt(t.max)}</b></span><span class="tk-zeile">Buy-in ab <b>${fmt(t.buyin)}</b></span>`}
       ${info ? `<span class="tk-extra">${esc(info(t))}</span>` : ''}
-      ${gehtNicht ? `<span class="tk-sperre">Noch ${fmt(t.buyin - chips)} Chips</span>` : ''}</button>`);
+      ${gehtNicht ? `<span class="tk-sperre">Noch ${fmt(mindest - chips)} Chips</span>` : ''}</button>`);
     b.addEventListener('click', () => { Ton.klick(); beiWahl(t.id); });
     liste.appendChild(b);
   }

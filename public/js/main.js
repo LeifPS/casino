@@ -4,10 +4,11 @@ import { Ton } from './ton.js';
 import { dom, dialog, bestaetigen, hinweis, zaehle, esc } from './ui.js';
 import { kunstBlackjack, kunstPoker, kunstRoulette } from './kunst.js';
 import { blackjack } from './blackjack.js';
+import { poker, pokerUnterwegs, pokerWiederverbinden } from './poker.js';
 
 const SPIELE = [
   { ...blackjack, kunst: kunstBlackjack, zeile: 'Schlage die Bank, ohne über 21 zu kommen.' },
-  { id: 'poker', name: 'Texas Hold’em', bereit: false, kunst: kunstPoker, zeile: 'Mit echten Spielern, freie Plätze füllen Computergegner.' },
+  { ...poker, kunst: kunstPoker },
   { id: 'roulette', name: 'Roulette', bereit: false, kunst: kunstRoulette, zeile: 'Setze auf Zahlen, Farben und Felder.' },
 ];
 
@@ -25,14 +26,15 @@ zaehle(guthaben, Store.chips());
 Store.beiAenderung((c) => zaehle(guthaben, c));
 
 let aktiv = null;   // { id, stop }
-function oeffne(id) {
+async function oeffne(id) {
+  if (aktiv && aktiv.fragen && id !== aktiv.id && !(await aktiv.fragen())) return;
   if (aktiv && aktiv.stop) aktiv.stop();
   aktiv = null; buehne.innerHTML = ''; buehne.className = '';
   const sp = SPIELE.find(s => s.id === id);
   document.getElementById('spielname').textContent = sp && sp.bereit ? sp.name : 'Casino';
   if (!sp || !sp.bereit) { lobby(); aktiv = { id: 'lobby' }; return; }
   const r = sp.start(buehne, { zurLobby: () => oeffne('lobby') });
-  aktiv = { id, stop: r && r.stop };
+  aktiv = { id, stop: r && r.stop, fragen: r && r.fragen };
 }
 
 function lobby() {
@@ -42,7 +44,7 @@ function lobby() {
     <div class="lobby-konto">${stapelHtml(Store.chips()) || ''}<div class="lobby-summe"><small>Dein Guthaben</small><b>${fmt(Store.chips())}</b></div></div>
     <div class="lobby-spiele">${SPIELE.map(s => `<button type="button" class="spielkarte${s.bereit ? '' : ' bald'}" data-id="${s.id}"${s.bereit ? '' : ' disabled'}>
       <span class="kunst">${s.kunst()}</span><span class="sk-name">${esc(s.name)}</span><span class="sk-zeile">${esc(s.zeile)}</span>
-      ${s.bereit ? (s.id === 'blackjack' && laufend ? '<span class="sk-marke">Runde läuft</span>' : '') : '<span class="sk-marke bald-marke">Bald</span>'}</button>`).join('')}</div>`;
+      ${s.bereit ? (s.id === 'blackjack' && laufend ? '<span class="sk-marke">Runde läuft</span>' : (s.id === 'poker' && pokerUnterwegs() ? '<span class="sk-marke">Du sitzt am Tisch</span>' : '')) : '<span class="sk-marke bald-marke">Bald</span>'}</button>`).join('')}</div>`;
   buehne.querySelectorAll('.spielkarte').forEach(b => b.addEventListener('click', () => { Ton.klick(); oeffne(b.dataset.id); }));
 }
 
@@ -73,6 +75,7 @@ function einstellungen() {
   q('#opt-ton').addEventListener('click', (e) => { const an = !Store.tonAn(); Store.tonSetzen(an); e.target.setAttribute('aria-pressed', an); e.target.textContent = an ? 'An' : 'Aus'; if (an) Ton.klick(); });
   q('#opt-code').addEventListener('click', () => { if (window.LGH && window.LGH.oeffnen) { d.zu(); window.LGH.oeffnen(); } else hinweis('Der Spielstand-Code ist hier nicht verfügbar.'); });
   q('#opt-neu').addEventListener('click', async () => {
+    if (pokerUnterwegs()) { hinweis('Du sitzt noch am Pokertisch. Steh erst auf.'); return; }
     if (await bestaetigen('Neu anfangen?', 'Dein Guthaben geht auf 1.000 Chips zurück, laufende Runden und Zahlen werden gelöscht. Das lässt sich nicht rückgängig machen.', 'Ja, neu anfangen')) {
       d.zu(); Store.neuAnfangen(); zaehle(guthaben, Store.chips()); oeffne('lobby'); hinweis('Neu gestartet mit 1.000 Chips.');
     }
@@ -81,5 +84,6 @@ function einstellungen() {
 
 // Start: laufende Runde fortsetzen, sonst Lobby
 const b = Store.state.bj;
-oeffne(b && b.phase !== 'einsatz' && b.phase !== 'ende' ? 'blackjack' : 'lobby');
+if (pokerUnterwegs()) { pokerWiederverbinden(); oeffne('poker'); }
+else oeffne(b && b.phase !== 'einsatz' && b.phase !== 'ende' ? 'blackjack' : 'lobby');
 if (!Store.speicherGeht()) hinweis('Dieser Browser speichert nichts: Chips gehen beim Schließen verloren.');
